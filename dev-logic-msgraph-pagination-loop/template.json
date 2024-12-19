@@ -1,0 +1,309 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workflows_dev_logic_MSGraph_nextLink_template_name": {
+            "defaultValue": "dev-logic-MSGraph-nextLink-template",
+            "type": "String"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.Logic/workflows",
+            "apiVersion": "2017-07-01",
+            "name": "[parameters('workflows_dev_logic_MSGraph_nextLink_template_name')]",
+            "location": "australiaeast",
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "properties": {
+                "state": "Disabled",
+                "definition": {
+                    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "$connections": {
+                            "defaultValue": {},
+                            "type": "Object"
+                        }
+                    },
+                    "triggers": {
+                        "HTTP_-_Get_all_guest_users_+_last_login": {
+                            "recurrence": {
+                                "interval": 1,
+                                "frequency": "Month",
+                                "timeZone": "E. Australia Standard Time"
+                            },
+                            "evaluatedRecurrence": {
+                                "interval": 1,
+                                "frequency": "Month",
+                                "timeZone": "E. Australia Standard Time"
+                            },
+                            "type": "Http",
+                            "inputs": {
+                                "uri": "https://graph.microsoft.com/beta/users/?$filter=userType%20eq%20'guest'&$select=id,displayName,mail,signInActivity",
+                                "method": "GET",
+                                "headers": {
+                                    "ConsistencyLevel": "eventual"
+                                },
+                                "authentication": {
+                                    "type": "ManagedServiceIdentity",
+                                    "audience": "https://graph.microsoft.com"
+                                }
+                            }
+                        }
+                    },
+                    "actions": {
+                        "Initialize_variable_-_var-exitLoop": {
+                            "runAfter": {},
+                            "type": "InitializeVariable",
+                            "inputs": {
+                                "variables": [
+                                    {
+                                        "name": "var-exitLoop",
+                                        "type": "boolean",
+                                        "value": false
+                                    }
+                                ]
+                            }
+                        },
+                        "Initialize_variable_-_var-nextLink": {
+                            "runAfter": {
+                                "Initialize_variable_-_var-exitLoop": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "InitializeVariable",
+                            "inputs": {
+                                "variables": [
+                                    {
+                                        "name": "var-nextLink",
+                                        "type": "string",
+                                        "value": "@null"
+                                    }
+                                ]
+                            }
+                        },
+                        "Initialize_variable_-_var-httpBody": {
+                            "runAfter": {
+                                "Initialize_variable_-_var-nextLink": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "InitializeVariable",
+                            "inputs": {
+                                "variables": [
+                                    {
+                                        "name": "var-httpBody",
+                                        "type": "object",
+                                        "value": "@triggerBody()"
+                                    }
+                                ]
+                            }
+                        },
+                        "Until_-_(var-exitloop_==_TRUE)": {
+                            "actions": {
+                                "Parse_JSON": {
+                                    "type": "ParseJson",
+                                    "inputs": {
+                                        "content": "@variables('var-httpBody')",
+                                        "schema": {
+                                            "type": "object",
+                                            "properties": {
+                                                "@@odata.context": {
+                                                    "type": "string"
+                                                },
+                                                "@@odata.nextLink": {
+                                                    "type": "string"
+                                                },
+                                                "value": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "displayName": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "mail": {
+                                                                "type": "string"
+                                                            },
+                                                            "id": {
+                                                                "type": "string"
+                                                            },
+                                                            "signInActivity": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "lastSignInDateTime": {
+                                                                        "type": [
+                                                                            "string",
+                                                                            "null"
+                                                                        ]
+                                                                    },
+                                                                    "lastSignInRequestId": {
+                                                                        "type": [
+                                                                            "string",
+                                                                            "null"
+                                                                        ]
+                                                                    },
+                                                                    "lastNonInteractiveSignInDateTime": {
+                                                                        "type": [
+                                                                            "string",
+                                                                            "null"
+                                                                        ]
+                                                                    },
+                                                                    "lastNonInteractiveSignInRequestId": {
+                                                                        "type": [
+                                                                            "string",
+                                                                            "null"
+                                                                        ]
+                                                                    },
+                                                                    "lastSuccessfulSignInDateTime": {
+                                                                        "type": [
+                                                                            "string",
+                                                                            "null"
+                                                                        ]
+                                                                    },
+                                                                    "lastSuccessfulSignInRequestId": {
+                                                                        "type": [
+                                                                            "string",
+                                                                            "null"
+                                                                        ]
+                                                                    }
+                                                                }
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "displayName",
+                                                            "mail",
+                                                            "id"
+                                                        ]
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "For_each_-_value_in_httpBody": {
+                                    "foreach": "@body('Parse_JSON')?['value']",
+                                    "actions": {},
+                                    "runAfter": {
+                                        "Parse_JSON": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "type": "Foreach"
+                                },
+                                "Condition": {
+                                    "actions": {
+                                        "Set_variable_-_(var-nextLink_==_[odata.nextLink])": {
+                                            "type": "SetVariable",
+                                            "inputs": {
+                                                "name": "var-nextLink",
+                                                "value": "@body('Parse_JSON')?['@odata.nextLink']"
+                                            }
+                                        },
+                                        "HTTP_-_get_nextLink": {
+                                            "runAfter": {
+                                                "Set_variable_-_(var-nextLink_==_[odata.nextLink])": [
+                                                    "Succeeded"
+                                                ]
+                                            },
+                                            "type": "Http",
+                                            "inputs": {
+                                                "uri": "@variables('var-nextLink')",
+                                                "method": "GET",
+                                                "headers": {
+                                                    "ConsistencyLevel": "eventual"
+                                                },
+                                                "authentication": {
+                                                    "type": "ManagedServiceIdentity",
+                                                    "audience": "https://graph.microsoft.com"
+                                                }
+                                            },
+                                            "runtimeConfiguration": {
+                                                "contentTransfer": {
+                                                    "transferMode": "Chunked"
+                                                }
+                                            }
+                                        },
+                                        "Set_variable_-_(var-httpBody_==_[var-nextLink].Body)": {
+                                            "runAfter": {
+                                                "HTTP_-_get_nextLink": [
+                                                    "Succeeded"
+                                                ]
+                                            },
+                                            "type": "SetVariable",
+                                            "inputs": {
+                                                "name": "var-httpBody",
+                                                "value": "@body('HTTP_-_get_nextLink')"
+                                            }
+                                        },
+                                        "Set_variable_-_(var-nextLink_==_NULL)": {
+                                            "runAfter": {
+                                                "Set_variable_-_(var-httpBody_==_[var-nextLink].Body)": [
+                                                    "Succeeded"
+                                                ]
+                                            },
+                                            "type": "SetVariable",
+                                            "inputs": {
+                                                "name": "var-nextLink",
+                                                "value": "@null"
+                                            }
+                                        }
+                                    },
+                                    "runAfter": {
+                                        "For_each_-_value_in_httpBody": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "else": {
+                                        "actions": {
+                                            "Set_variable_-_(var-exitloop_==_TRUE)": {
+                                                "type": "SetVariable",
+                                                "inputs": {
+                                                    "name": "var-exitLoop",
+                                                    "value": true
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "expression": {
+                                        "not": [
+                                            {
+                                                "empty": [
+                                                    "@body('Parse_JSON')?['@odata.nextLink']"
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    "type": "If"
+                                }
+                            },
+                            "runAfter": {
+                                "Initialize_variable_-_var-httpBody": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "expression": "@equals(variables('var-exitLoop'),true)",
+                            "limit": {
+                                "count": 60,
+                                "timeout": "PT1H"
+                            },
+                            "type": "Until"
+                        }
+                    },
+                    "outputs": {}
+                },
+                "parameters": {
+                    "$connections": {
+                        "value": {}
+                    }
+                }
+            }
+        }
+    ]
+}
