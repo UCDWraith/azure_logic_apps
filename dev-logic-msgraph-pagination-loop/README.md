@@ -6,7 +6,7 @@ Depending on what you are querying Microsoft Graph will generally return 100 ite
 
 The template when deployed using the button below will deploy a **Consumption** based Logic App and it will create an associated 'System assigned Managed Identity'.
 
-Out of the box and assuming you have restricted generic access to Microsoft Graph the newly created managed identity will generally not have permissions to query [in the case of this sample template] all guest users in your organization. To address this I have included a sample PowerShell script which will retrieve the 'Object ID' of the new managed identity and assign it permissions within Microsoft Graph.
+Out of the box and assuming you have restricted generic access to Microsoft Graph the newly created managed identity will generally not have permissions to query [in the case of this sample template] all guest users in your organization. To address this I have included a sample PowerShell script which will retrieve the 'Object ID' of the new managed identity and assign it appropriate permissions within Microsoft Graph.
 
 The application ID of Microsoft Graph is the same across all tenants. There are several other well-known application ID's for other Microsoft API's like SharePoint Online, Microsoft Teams, Azure Key Vault etc. You might also use a similar methodology to delegate access to them.
 

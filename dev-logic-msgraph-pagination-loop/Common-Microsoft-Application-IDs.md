@@ -1,0 +1,27 @@
+# Common Microsoft Application IDs
+
+- Microsoft Graph: 00000003-0000-0000-c000-000000000000
+- SharePoint Online: 00000003-0000-0ff1-ce00-000000000000
+- Office 365 Exchange Online: 00000002-0000-0ff1-ce00-000000000000
+- Azure Active Directory Graph: 00000002-0000-0000-c000-000000000000
+- Microsoft Teams: 00000003-0000-0ec0-0000-000000000000
+- Skype for Business (Lync): 00000004-0000-0ff1-ce00-000000000000
+- Microsoft Intune: 0000000a-0000-0000-c000-000000000000
+- Microsoft Power BI Service: 00000009-0000-0000-c000-000000000000
+- Microsoft 365 Management APIs: 00000001-0000-0000-c000-000000000000
+- Windows Azure Service Management API: 00000002-0000-0000-c000-000000000000
+- Azure DevOps: 499b84ac-1321-427f-aa17-267ca6975798
+- Azure Key Vault: a1c52f3e-dc41-4c33-9f0f-b32f08b5c56e
+- Microsoft Flow (Power Automate): 6d9d4181-6cbe-4f0e-a092-fdd9cbb0d95b
+- Azure Kubernetes Service (AKS): 6dae42f8-4368-4678-94ff-3960e28e3630
+- Microsoft Office Client Applications: d3590ed6-52b3-4102-aeff-aad2292ab01c
+- Yammer: 00000005-0000-0ff1-ce00-000000000000
+- Microsoft Planner: 0cdb527f-a8ef-4dcf-8a8a-d42df6e0be65
+- Microsoft Bookings: 07a78f6f-3cb6-4cf7-87f9-a5096961c796
+- Microsoft Dynamics CRM: 00000007-0000-0000-c000-000000000000
+- Microsoft OneDrive: abfa0a7c-a6b6-4736-8310-5855508787cd
+- Azure Information Protection: b8c004ec-48fe-49db-99e7-380f67e42e61
+- Microsoft Stream: 5f637b07-3dc4-48c3-8692-2f79c51f240b
+- Azure Data Lake: 00000007-0000-0000-c000-000000000000
+- Azure Rights Management (RMS): 00000012-0000-0000-c000-000000000000
+- Microsoft Defender for Identity (Azure ATP): c160e5bf-910d-4845-8a3d-f6b9c98063b5
