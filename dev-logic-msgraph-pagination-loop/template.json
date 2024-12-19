@@ -2,9 +2,13 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "workflows_dev_logic_MSGraph_nextLink_template_name": {
-            "defaultValue": "dev-logic-MSGraph-nextLink-template",
+        "LogicAppName": {
+            "defaultValue": "dev-logic-msgraph-nextLink-template",
             "type": "String"
+        },
+        "Location": {
+            "defaultValue": "australiaeast",
+            "type": "string"
         }
     },
     "variables": {},
@@ -12,8 +16,8 @@
         {
             "type": "Microsoft.Logic/workflows",
             "apiVersion": "2017-07-01",
-            "name": "[parameters('workflows_dev_logic_MSGraph_nextLink_template_name')]",
-            "location": "australiaeast",
+            "name": "[parameters('LogicAppName')]",
+            "location": "[parameters('Location')]",
             "identity": {
                 "type": "SystemAssigned"
             },
