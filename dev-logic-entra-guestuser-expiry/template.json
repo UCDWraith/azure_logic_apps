@@ -1,0 +1,1306 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "LogicAppName": {
+            "defaultValue": "dev-logic-entra-guestuser-expiry",
+            "type": "String"
+        },
+        "Location": {
+            "defaultValue": "australiaeast",
+            "type": "string"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.Logic/workflows",
+            "apiVersion": "2017-07-01",
+            "name": "[parameters('LogicAppName')]",
+            "location": "[parameters('Location')]",
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "properties": {
+                "state": "Disabled",
+                "definition": {
+                    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "$connections": {
+                            "defaultValue": {},
+                            "type": "Object"
+                        }
+                    },
+                    "triggers": {
+                        "HTTP_-_Get_all_guest_users_+_last_login": {
+                            "recurrence": {
+                                "interval": 1,
+                                "frequency": "Week",
+                                "timeZone": "E. Australia Standard Time",
+                                "schedule": {
+                                    "weekDays": [
+                                        "Monday"
+                                    ],
+                                    "hours": [
+                                        "5"
+                                    ],
+                                    "minutes": [
+                                        43
+                                    ]
+                                }
+                            },
+                            "evaluatedRecurrence": {
+                                "interval": 1,
+                                "frequency": "Week",
+                                "timeZone": "E. Australia Standard Time",
+                                "schedule": {
+                                    "weekDays": [
+                                        "Monday"
+                                    ],
+                                    "hours": [
+                                        "5"
+                                    ],
+                                    "minutes": [
+                                        43
+                                    ]
+                                }
+                            },
+                            "type": "Http",
+                            "inputs": {
+                                "uri": "https://graph.microsoft.com/beta/users/?$filter=userType%20eq%20'guest'&$select=id,displayName,mail,signInActivity,accountEnabled,createdDateTime",
+                                "method": "GET",
+                                "headers": {
+                                    "ConsistencyLevel": "eventual"
+                                },
+                                "authentication": {
+                                    "type": "ManagedServiceIdentity",
+                                    "audience": "https://graph.microsoft.com"
+                                }
+                            }
+                        }
+                    },
+                    "actions": {
+                        "Initialize_variable_-_var-exitLoop": {
+                            "runAfter": {},
+                            "type": "InitializeVariable",
+                            "inputs": {
+                                "variables": [
+                                    {
+                                        "name": "var-exitLoop",
+                                        "type": "boolean",
+                                        "value": false
+                                    }
+                                ]
+                            }
+                        },
+                        "Initialize_variable_-_var-nextLink": {
+                            "runAfter": {
+                                "Initialize_variable_-_var-exitLoop": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "InitializeVariable",
+                            "inputs": {
+                                "variables": [
+                                    {
+                                        "name": "var-nextLink",
+                                        "type": "string",
+                                        "value": "@null"
+                                    }
+                                ]
+                            }
+                        },
+                        "Initialize_variable_-_var-httpBody": {
+                            "runAfter": {
+                                "Initialize_variable_-_var-nextLink": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "InitializeVariable",
+                            "inputs": {
+                                "variables": [
+                                    {
+                                        "name": "var-httpBody",
+                                        "type": "object",
+                                        "value": "@triggerBody()"
+                                    }
+                                ]
+                            }
+                        },
+                        "Until_-_(var-exitloop_==_TRUE)": {
+                            "actions": {
+                                "Parse_JSON": {
+                                    "type": "ParseJson",
+                                    "inputs": {
+                                        "content": "@variables('var-httpBody')",
+                                        "schema": {
+                                            "type": "object",
+                                            "properties": {
+                                                "@@odata.context": {
+                                                    "type": "string"
+                                                },
+                                                "@@odata.nextLink": {
+                                                    "type": "string"
+                                                },
+                                                "value": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "displayName": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "mail": {
+                                                                "type": "string"
+                                                            },
+                                                            "accountEnabled": {
+                                                                "type": "boolean"
+                                                            },
+                                                            "createdDateTime": {
+                                                                "type": "string"
+                                                            },
+                                                            "id": {
+                                                                "type": "string"
+                                                            },
+                                                            "signInActivity": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "lastSignInDateTime": {
+                                                                        "type": [
+                                                                            "string",
+                                                                            "null"
+                                                                        ]
+                                                                    },
+                                                                    "lastSignInRequestId": {
+                                                                        "type": [
+                                                                            "string",
+                                                                            "null"
+                                                                        ]
+                                                                    },
+                                                                    "lastNonInteractiveSignInDateTime": {
+                                                                        "type": [
+                                                                            "string",
+                                                                            "null"
+                                                                        ]
+                                                                    },
+                                                                    "lastNonInteractiveSignInRequestId": {
+                                                                        "type": [
+                                                                            "string",
+                                                                            "null"
+                                                                        ]
+                                                                    },
+                                                                    "lastSuccessfulSignInDateTime": {
+                                                                        "type": [
+                                                                            "string",
+                                                                            "null"
+                                                                        ]
+                                                                    },
+                                                                    "lastSuccessfulSignInRequestId": {
+                                                                        "type": [
+                                                                            "string",
+                                                                            "null"
+                                                                        ]
+                                                                    }
+                                                                }
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "displayName",
+                                                            "mail",
+                                                            "id",
+                                                            "accountEnabled",
+                                                            "createdDateTime"
+                                                        ]
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "For_each_-_value_in_httpBody": {
+                                    "foreach": "@body('Parse_JSON')?['value']",
+                                    "actions": {
+                                        "Condition_-_(accountEnabled_==_TRUE)": {
+                                            "actions": {
+                                                "Condition_-_(signInActivity_!=_NULL)": {
+                                                    "actions": {
+                                                        "HTTP_-_get_guest_group_memberships": {
+                                                            "type": "Http",
+                                                            "inputs": {
+                                                                "uri": "https://graph.microsoft.com/beta/users/@{items('For_each_-_value_in_httpBody')?['id']}/transitiveMemberOf?$select=id,createdDateTime,description,displayName",
+                                                                "method": "GET",
+                                                                "headers": {
+                                                                    "ConsistencyLevel": "eventual"
+                                                                },
+                                                                "authentication": {
+                                                                    "type": "ManagedServiceIdentity",
+                                                                    "audience": "https://graph.microsoft.com"
+                                                                }
+                                                            },
+                                                            "runtimeConfiguration": {
+                                                                "contentTransfer": {
+                                                                    "transferMode": "Chunked"
+                                                                }
+                                                            }
+                                                        },
+                                                        "Parse_JSON_-_extract_groups": {
+                                                            "runAfter": {
+                                                                "HTTP_-_get_guest_group_memberships": [
+                                                                    "Succeeded"
+                                                                ]
+                                                            },
+                                                            "type": "ParseJson",
+                                                            "inputs": {
+                                                                "content": "@body('HTTP_-_get_guest_group_memberships')",
+                                                                "schema": {
+                                                                    "type": "object",
+                                                                    "properties": {
+                                                                        "@@odata.context": {
+                                                                            "type": "string"
+                                                                        },
+                                                                        "value": {
+                                                                            "type": "array",
+                                                                            "items": {
+                                                                                "type": "object",
+                                                                                "properties": {
+                                                                                    "@@odata.type": {
+                                                                                        "type": "string"
+                                                                                    },
+                                                                                    "id": {
+                                                                                        "type": "string"
+                                                                                    },
+                                                                                    "createdDateTime": {
+                                                                                        "type": "string"
+                                                                                    },
+                                                                                    "description": {
+                                                                                        "type": [
+                                                                                            "string",
+                                                                                            "null"
+                                                                                        ]
+                                                                                    },
+                                                                                    "displayName": {
+                                                                                        "type": "string"
+                                                                                    }
+                                                                                },
+                                                                                "required": [
+                                                                                    "@@odata.type",
+                                                                                    "id",
+                                                                                    "createdDateTime",
+                                                                                    "description",
+                                                                                    "displayName"
+                                                                                ]
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        },
+                                                        "For_each_-_group_guestUser_is_a_member_of": {
+                                                            "foreach": "@body('Parse_JSON_-_extract_groups')?['value']",
+                                                            "actions": {
+                                                                "Condition_-_(group_==_corpGuestUsers)": {
+                                                                    "actions": {
+                                                                        "Set_variable_-_(guestUser_==_TRUE)": {
+                                                                            "type": "SetVariable",
+                                                                            "inputs": {
+                                                                                "name": "var-guestUser",
+                                                                                "value": true
+                                                                            }
+                                                                        }
+                                                                    },
+                                                                    "runAfter": {
+                                                                        "Append_to_array_variable_-_update_array-groupAffiliations": [
+                                                                            "Succeeded"
+                                                                        ]
+                                                                    },
+                                                                    "else": {
+                                                                        "actions": {}
+                                                                    },
+                                                                    "expression": {
+                                                                        "and": [
+                                                                            {
+                                                                                "equals": [
+                                                                                    "@{items('For_each_-_group_guestUser_is_a_member_of')?['id']}",
+                                                                                    "11111111-1111-1111-1111-111111111111"
+                                                                                ]
+                                                                            }
+                                                                        ]
+                                                                    },
+                                                                    "type": "If"
+                                                                },
+                                                                "Condition_-_(guestNoEmployeeId_==_TRUE)": {
+                                                                    "actions": {
+                                                                        "Set_variable_-_(guestNoEmployeeId_==_TRUE)": {
+                                                                            "type": "SetVariable",
+                                                                            "inputs": {
+                                                                                "name": "var-guestNoEmployeeId",
+                                                                                "value": true
+                                                                            }
+                                                                        }
+                                                                    },
+                                                                    "runAfter": {
+                                                                        "Condition_-_(group_==_corpGuestUsers)": [
+                                                                            "Succeeded"
+                                                                        ]
+                                                                    },
+                                                                    "else": {
+                                                                        "actions": {}
+                                                                    },
+                                                                    "expression": {
+                                                                        "and": [
+                                                                            {
+                                                                                "equals": [
+                                                                                    "@{items('For_each_-_group_guestUser_is_a_member_of')?['id']}",
+                                                                                    "22222222-2222-2222-2222-222222222222"
+                                                                                ]
+                                                                            }
+                                                                        ]
+                                                                    },
+                                                                    "type": "If"
+                                                                },
+                                                                "Condition_-_group_(guestUser_OR_guestNoEmployeeId)": {
+                                                                    "actions": {},
+                                                                    "runAfter": {
+                                                                        "Condition_-_(guestNoEmployeeId_==_TRUE)": [
+                                                                            "Succeeded"
+                                                                        ]
+                                                                    },
+                                                                    "else": {
+                                                                        "actions": {
+                                                                            "Set_variable_-_(var-otherGroups_==_TRUE)": {
+                                                                                "type": "SetVariable",
+                                                                                "inputs": {
+                                                                                    "name": "var-otherGroups",
+                                                                                    "value": true
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    },
+                                                                    "expression": {
+                                                                        "or": [
+                                                                            {
+                                                                                "equals": [
+                                                                                    "@{items('For_each_-_group_guestUser_is_a_member_of')?['id']}",
+                                                                                    "11111111-1111-1111-1111-111111111111"
+                                                                                ]
+                                                                            },
+                                                                            {
+                                                                                "equals": [
+                                                                                    "@{items('For_each_-_group_guestUser_is_a_member_of')?['id']}",
+                                                                                    "22222222-2222-2222-2222-222222222222"
+                                                                                ]
+                                                                            }
+                                                                        ]
+                                                                    },
+                                                                    "type": "If"
+                                                                },
+                                                                "Append_to_array_variable_-_update_array-groupAffiliations": {
+                                                                    "runAfter": {
+                                                                        "Append_to_array_variable_-_update_array-groupList": [
+                                                                            "Succeeded"
+                                                                        ]
+                                                                    },
+                                                                    "type": "AppendToArrayVariable",
+                                                                    "inputs": {
+                                                                        "name": "array-groupAffiliations",
+                                                                        "value": {
+                                                                            "guestId": "@items('For_each_-_value_in_httpBody')?['id']",
+                                                                            "guestDisplayName": "@items('For_each_-_value_in_httpBody')?['displayName']",
+                                                                            "groupId": "@{items('For_each_-_group_guestUser_is_a_member_of')?['id']}",
+                                                                            "groupDisplayName": "@{items('For_each_-_group_guestUser_is_a_member_of')?['displayName']}"
+                                                                        }
+                                                                    }
+                                                                },
+                                                                "Append_to_array_variable_-_update_array-groupList": {
+                                                                    "runAfter": {
+                                                                        "Append_to_array_variable_-_update_array-guestGroups": [
+                                                                            "Succeeded"
+                                                                        ]
+                                                                    },
+                                                                    "type": "AppendToArrayVariable",
+                                                                    "inputs": {
+                                                                        "name": "array-groupList",
+                                                                        "value": {
+                                                                            "Id": "@{items('For_each_-_group_guestUser_is_a_member_of')?['id']}",
+                                                                            "DisplayName": "@{items('For_each_-_group_guestUser_is_a_member_of')?['displayName']}"
+                                                                        }
+                                                                    }
+                                                                },
+                                                                "Append_to_array_variable_-_update_array-guestGroups": {
+                                                                    "type": "AppendToArrayVariable",
+                                                                    "inputs": {
+                                                                        "name": "array-guestGroups",
+                                                                        "value": {
+                                                                            "Id": "@{items('For_each_-_group_guestUser_is_a_member_of')?['id']}",
+                                                                            "DisplayName": "@{items('For_each_-_group_guestUser_is_a_member_of')?['displayName']}"
+                                                                        }
+                                                                    }
+                                                                }
+                                                            },
+                                                            "runAfter": {
+                                                                "Parse_JSON_-_extract_groups": [
+                                                                    "Succeeded"
+                                                                ]
+                                                            },
+                                                            "type": "Foreach",
+                                                            "runtimeConfiguration": {
+                                                                "concurrency": {
+                                                                    "repetitions": 1
+                                                                }
+                                                            }
+                                                        },
+                                                        "Set_variable_-_reset_(var-guestUser_==_FALSE)": {
+                                                            "runAfter": {
+                                                                "Condition_-_(var-otherGroups_==_FALSE)": [
+                                                                    "Succeeded"
+                                                                ]
+                                                            },
+                                                            "type": "SetVariable",
+                                                            "inputs": {
+                                                                "name": "var-guestUser",
+                                                                "value": false
+                                                            }
+                                                        },
+                                                        "Set_variable_-_reset_(var-guestNoEmployeeId_==_FALSE)": {
+                                                            "runAfter": {
+                                                                "Set_variable_-_reset_(var-guestUser_==_FALSE)": [
+                                                                    "Succeeded"
+                                                                ]
+                                                            },
+                                                            "type": "SetVariable",
+                                                            "inputs": {
+                                                                "name": "var-guestNoEmployeeId",
+                                                                "value": false
+                                                            }
+                                                        },
+                                                        "Set_variable_-_reset_(var-otherGroups_==_FALSE)": {
+                                                            "runAfter": {
+                                                                "Set_variable_-_reset_(var-guestNoEmployeeId_==_FALSE)": [
+                                                                    "Succeeded"
+                                                                ]
+                                                            },
+                                                            "type": "SetVariable",
+                                                            "inputs": {
+                                                                "name": "var-otherGroups",
+                                                                "value": false
+                                                            }
+                                                        },
+                                                        "Condition_-_(var-otherGroups_==_FALSE)": {
+                                                            "actions": {
+                                                                "Condition_-_(lastSignInDateTime_-lt_var-lookBack)": {
+                                                                    "actions": {
+                                                                        "Append_to_array_variable_-_update_array-guestsToDisable": {
+                                                                            "type": "AppendToArrayVariable",
+                                                                            "inputs": {
+                                                                                "name": "array-guestsToDisable",
+                                                                                "value": {
+                                                                                    "id": "@items('For_each_-_value_in_httpBody')?['id']",
+                                                                                    "displayName": "@items('For_each_-_value_in_httpBody')?['displayName']",
+                                                                                    "mail": "@items('For_each_-_value_in_httpBody')?['mail']",
+                                                                                    "accountEnabled": "@items('For_each_-_value_in_httpBody')?['accountEnabled']",
+                                                                                    "createdDateTime": "@items('For_each_-_value_in_httpBody')?['createdDateTime']",
+                                                                                    "signInActivity": "@items('For_each_-_value_in_httpBody')?['signInActivity']",
+                                                                                    "groupMembership": "@variables('array-guestGroups')"
+                                                                                }
+                                                                            }
+                                                                        },
+                                                                        "HTTP_-_Disable_accounts_in_array-guestsToDisable": {
+                                                                            "runAfter": {
+                                                                                "Append_to_array_variable_-_update_array-guestsToDisable": [
+                                                                                    "Succeeded"
+                                                                                ]
+                                                                            },
+                                                                            "type": "Http",
+                                                                            "inputs": {
+                                                                                "uri": "https://graph.microsoft.com/v1.0/users/@{items('For_each_-_value_in_httpBody')?['id']}",
+                                                                                "method": "PATCH",
+                                                                                "headers": {
+                                                                                    "ConsistencyLevel": "eventual"
+                                                                                },
+                                                                                "body": {
+                                                                                    "accountEnabled": false
+                                                                                },
+                                                                                "authentication": {
+                                                                                    "type": "ManagedServiceIdentity",
+                                                                                    "audience": "https://graph.microsoft.com"
+                                                                                }
+                                                                            },
+                                                                            "runtimeConfiguration": {
+                                                                                "contentTransfer": {
+                                                                                    "transferMode": "Chunked"
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    },
+                                                                    "runAfter": {
+                                                                        "Set_variable_-_var-lastsignIn": [
+                                                                            "Succeeded"
+                                                                        ]
+                                                                    },
+                                                                    "else": {
+                                                                        "actions": {
+                                                                            "Append_to_array_variable_-_update_array-recentLoginGuests": {
+                                                                                "type": "AppendToArrayVariable",
+                                                                                "inputs": {
+                                                                                    "name": "array-recentLoginGuests",
+                                                                                    "value": {
+                                                                                        "id": "@items('For_each_-_value_in_httpBody')?['id']",
+                                                                                        "displayName": "@items('For_each_-_value_in_httpBody')?['displayName']",
+                                                                                        "mail": "@items('For_each_-_value_in_httpBody')?['mail']",
+                                                                                        "accountEnabled": "@items('For_each_-_value_in_httpBody')?['accountEnabled']",
+                                                                                        "createdDateTime": "@items('For_each_-_value_in_httpBody')?['createdDateTime']",
+                                                                                        "signInActivity": "@items('For_each_-_value_in_httpBody')?['signInActivity']",
+                                                                                        "groupMembership": "@variables('array-guestGroups')"
+                                                                                    }
+                                                                                }
+                                                                            },
+                                                                            "HTTP_-_RevokeSessions_for_array-recentLoginGuests": {
+                                                                                "runAfter": {
+                                                                                    "Append_to_array_variable_-_update_array-recentLoginGuests": [
+                                                                                        "Succeeded"
+                                                                                    ]
+                                                                                },
+                                                                                "type": "Http",
+                                                                                "inputs": {
+                                                                                    "uri": "https://graph.microsoft.com/v1.0/users/@{items('For_each_-_value_in_httpBody')?['id']}/revokeSignInSessions",
+                                                                                    "method": "POST",
+                                                                                    "headers": {
+                                                                                        "ConsistencyLevel": "eventual"
+                                                                                    },
+                                                                                    "authentication": {
+                                                                                        "type": "ManagedServiceIdentity",
+                                                                                        "audience": "https://graph.microsoft.com"
+                                                                                    }
+                                                                                },
+                                                                                "runtimeConfiguration": {
+                                                                                    "contentTransfer": {
+                                                                                        "transferMode": "Chunked"
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    },
+                                                                    "expression": {
+                                                                        "and": [
+                                                                            {
+                                                                                "less": [
+                                                                                    "@variables('var-lastSignIn')",
+                                                                                    "@variables('var-lookBack')"
+                                                                                ]
+                                                                            }
+                                                                        ]
+                                                                    },
+                                                                    "type": "If"
+                                                                },
+                                                                "Set_variable_-_var-lastsignIn": {
+                                                                    "type": "SetVariable",
+                                                                    "inputs": {
+                                                                        "name": "var-lastSignIn",
+                                                                        "value": "@coalesce(item()?['signInActivity']?['lastSignInDateTime'],item()?['signInActivity']?['lastNonInteractiveSignInDateTime'])"
+                                                                    }
+                                                                }
+                                                            },
+                                                            "runAfter": {
+                                                                "For_each_-_group_guestUser_is_a_member_of": [
+                                                                    "Succeeded"
+                                                                ]
+                                                            },
+                                                            "else": {
+                                                                "actions": {
+                                                                    "Append_to_array_variable_-_update_array-otherGroups": {
+                                                                        "type": "AppendToArrayVariable",
+                                                                        "inputs": {
+                                                                            "name": "array-otherGroups",
+                                                                            "value": {
+                                                                                "id": "@items('For_each_-_value_in_httpBody')?['id']",
+                                                                                "displayName": "@items('For_each_-_value_in_httpBody')?['displayName']",
+                                                                                "mail": "@items('For_each_-_value_in_httpBody')?['mail']",
+                                                                                "accountEnabled": "@items('For_each_-_value_in_httpBody')?['accountEnabled']",
+                                                                                "createdDateTime": "@items('For_each_-_value_in_httpBody')?['createdDateTime']",
+                                                                                "signInActivity": "@items('For_each_-_value_in_httpBody')?['signInActivity']",
+                                                                                "groupMembership": "@variables('array-guestGroups')"
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            },
+                                                            "expression": {
+                                                                "and": [
+                                                                    {
+                                                                        "equals": [
+                                                                            "@variables('var-otherGroups')",
+                                                                            "@false"
+                                                                        ]
+                                                                    }
+                                                                ]
+                                                            },
+                                                            "type": "If"
+                                                        },
+                                                        "Set_variable_-_reset_(array-guestGroups_==_NULL)": {
+                                                            "runAfter": {
+                                                                "Set_variable_-_reset_(var-otherGroups_==_FALSE)": [
+                                                                    "Succeeded"
+                                                                ]
+                                                            },
+                                                            "type": "SetVariable",
+                                                            "inputs": {
+                                                                "name": "array-guestGroups",
+                                                                "value": "@null"
+                                                            }
+                                                        },
+                                                        "Set_variable_-_reset_(var-lastSignIn)": {
+                                                            "runAfter": {
+                                                                "Set_variable_-_reset_(array-guestGroups_==_NULL)": [
+                                                                    "Succeeded"
+                                                                ]
+                                                            },
+                                                            "type": "SetVariable",
+                                                            "inputs": {
+                                                                "name": "var-lastSignIn",
+                                                                "value": " "
+                                                            }
+                                                        }
+                                                    },
+                                                    "else": {
+                                                        "actions": {
+                                                            "Condition_-_(createdDateTime_-lt_var-lookBack)": {
+                                                                "actions": {
+                                                                    "Append_to_array_variable_-_update_array-neverLoggedIn": {
+                                                                        "type": "AppendToArrayVariable",
+                                                                        "inputs": {
+                                                                            "name": "array-neverLoggedIn",
+                                                                            "value": {
+                                                                                "id": "@items('For_each_-_value_in_httpBody')?['id']",
+                                                                                "displayName": "@items('For_each_-_value_in_httpBody')?['displayName']",
+                                                                                "mail": "@items('For_each_-_value_in_httpBody')?['mail']",
+                                                                                "accountEnabled": "@items('For_each_-_value_in_httpBody')?['accountEnabled']",
+                                                                                "createdDateTime": "@items('For_each_-_value_in_httpBody')?['createdDateTime']",
+                                                                                "signInActivity": "@items('For_each_-_value_in_httpBody')?['signInActivity']"
+                                                                            }
+                                                                        }
+                                                                    },
+                                                                    "HTTP_-_Disable_accounts_in_array-neverLoggedIn": {
+                                                                        "runAfter": {
+                                                                            "Append_to_array_variable_-_update_array-neverLoggedIn": [
+                                                                                "Succeeded"
+                                                                            ]
+                                                                        },
+                                                                        "type": "Http",
+                                                                        "inputs": {
+                                                                            "uri": "https://graph.microsoft.com/v1.0/users/@{items('For_each_-_value_in_httpBody')?['id']}",
+                                                                            "method": "PATCH",
+                                                                            "headers": {
+                                                                                "ConsistencyLevel": "eventual"
+                                                                            },
+                                                                            "body": {
+                                                                                "accountEnabled": false
+                                                                            },
+                                                                            "authentication": {
+                                                                                "type": "ManagedServiceIdentity",
+                                                                                "audience": "https://graph.microsoft.com"
+                                                                            }
+                                                                        },
+                                                                        "runtimeConfiguration": {
+                                                                            "contentTransfer": {
+                                                                                "transferMode": "Chunked"
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                },
+                                                                "else": {
+                                                                    "actions": {
+                                                                        "Append_to_array_variable_-_update_array-newAccount": {
+                                                                            "type": "AppendToArrayVariable",
+                                                                            "inputs": {
+                                                                                "name": "array-newAccount",
+                                                                                "value": {
+                                                                                    "id": "@items('For_each_-_value_in_httpBody')?['id']",
+                                                                                    "displayName": "@items('For_each_-_value_in_httpBody')?['displayName']",
+                                                                                    "mail": "@items('For_each_-_value_in_httpBody')?['mail']",
+                                                                                    "accountEnabled": "@items('For_each_-_value_in_httpBody')?['accountEnabled']",
+                                                                                    "createdDateTime": "@items('For_each_-_value_in_httpBody')?['createdDateTime']",
+                                                                                    "signInActivity": "@items('For_each_-_value_in_httpBody')?['signInActivity']"
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                },
+                                                                "expression": {
+                                                                    "and": [
+                                                                        {
+                                                                            "less": [
+                                                                                "@items('For_each_-_value_in_httpBody')?['createdDateTime']",
+                                                                                "@variables('var-lookBack')"
+                                                                            ]
+                                                                        }
+                                                                    ]
+                                                                },
+                                                                "type": "If"
+                                                            }
+                                                        }
+                                                    },
+                                                    "expression": {
+                                                        "not": [
+                                                            {
+                                                                "empty": [
+                                                                    "@items('For_each_-_value_in_httpBody')?['signInActivity']"
+                                                                ]
+                                                            }
+                                                        ]
+                                                    },
+                                                    "type": "If"
+                                                }
+                                            },
+                                            "else": {
+                                                "actions": {
+                                                    "Append_to_array_variable_-_update_array-disabledGuests": {
+                                                        "type": "AppendToArrayVariable",
+                                                        "inputs": {
+                                                            "name": "array-disabledGuests",
+                                                            "value": {
+                                                                "id": "@items('For_each_-_value_in_httpBody')?['id']",
+                                                                "displayName": "@items('For_each_-_value_in_httpBody')?['displayName']",
+                                                                "mail": "@items('For_each_-_value_in_httpBody')?['mail']",
+                                                                "accountEnabled": "@items('For_each_-_value_in_httpBody')?['accountEnabled']",
+                                                                "createdDateTime": "@items('For_each_-_value_in_httpBody')?['createdDateTime']",
+                                                                "signInActivity": "@items('For_each_-_value_in_httpBody')?['signInActivity']"
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            "expression": {
+                                                "and": [
+                                                    {
+                                                        "equals": [
+                                                            "@items('For_each_-_value_in_httpBody')?['accountEnabled']",
+                                                            "@true"
+                                                        ]
+                                                    }
+                                                ]
+                                            },
+                                            "type": "If"
+                                        }
+                                    },
+                                    "runAfter": {
+                                        "Parse_JSON": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "type": "Foreach",
+                                    "runtimeConfiguration": {
+                                        "concurrency": {
+                                            "repetitions": 1
+                                        }
+                                    }
+                                },
+                                "Condition": {
+                                    "actions": {
+                                        "Set_variable_-_(var-nextLink_==_[odata.nextLink])": {
+                                            "type": "SetVariable",
+                                            "inputs": {
+                                                "name": "var-nextLink",
+                                                "value": "@body('Parse_JSON')?['@odata.nextLink']"
+                                            }
+                                        },
+                                        "HTTP_-_get_nextLink": {
+                                            "runAfter": {
+                                                "Set_variable_-_(var-nextLink_==_[odata.nextLink])": [
+                                                    "Succeeded"
+                                                ]
+                                            },
+                                            "type": "Http",
+                                            "inputs": {
+                                                "uri": "@variables('var-nextLink')",
+                                                "method": "GET",
+                                                "headers": {
+                                                    "ConsistencyLevel": "eventual"
+                                                },
+                                                "authentication": {
+                                                    "type": "ManagedServiceIdentity",
+                                                    "audience": "https://graph.microsoft.com"
+                                                }
+                                            },
+                                            "runtimeConfiguration": {
+                                                "contentTransfer": {
+                                                    "transferMode": "Chunked"
+                                                }
+                                            }
+                                        },
+                                        "Set_variable_-_(var-httpBody_==_[var-nextLink].Body)": {
+                                            "runAfter": {
+                                                "HTTP_-_get_nextLink": [
+                                                    "Succeeded"
+                                                ]
+                                            },
+                                            "type": "SetVariable",
+                                            "inputs": {
+                                                "name": "var-httpBody",
+                                                "value": "@body('HTTP_-_get_nextLink')"
+                                            }
+                                        },
+                                        "Set_variable_-_(var-nextLink_==_NULL)": {
+                                            "runAfter": {
+                                                "Set_variable_-_(var-httpBody_==_[var-nextLink].Body)": [
+                                                    "Succeeded"
+                                                ]
+                                            },
+                                            "type": "SetVariable",
+                                            "inputs": {
+                                                "name": "var-nextLink",
+                                                "value": "@null"
+                                            }
+                                        }
+                                    },
+                                    "runAfter": {
+                                        "For_each_-_value_in_httpBody": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "else": {
+                                        "actions": {
+                                            "Set_variable_-_(var-exitloop_==_TRUE)": {
+                                                "type": "SetVariable",
+                                                "inputs": {
+                                                    "name": "var-exitLoop",
+                                                    "value": true
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "expression": {
+                                        "not": [
+                                            {
+                                                "empty": [
+                                                    "@body('Parse_JSON')?['@odata.nextLink']"
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    "type": "If"
+                                }
+                            },
+                            "runAfter": {
+                                "Initialize_variable_-_var-lastSignIn": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "expression": "@equals(variables('var-exitLoop'),true)",
+                            "limit": {
+                                "count": 60,
+                                "timeout": "PT1H"
+                            },
+                            "type": "Until"
+                        },
+                        "Initialize_variable_-_var-lookBack": {
+                            "runAfter": {
+                                "Initialize_variable_-_var-lookBackPeriod": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "InitializeVariable",
+                            "inputs": {
+                                "variables": [
+                                    {
+                                        "name": "var-lookBack",
+                                        "type": "string",
+                                        "value": "@addDays(utcNow(), mul(variables('var-lookBackPeriod'), -1))"
+                                    }
+                                ]
+                            }
+                        },
+                        "Initialize_variable_-_var-lookBackPeriod": {
+                            "runAfter": {
+                                "Initialize_variable_-_var-httpBody": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "InitializeVariable",
+                            "inputs": {
+                                "variables": [
+                                    {
+                                        "name": "var-lookBackPeriod",
+                                        "type": "integer",
+                                        "value": 30
+                                    }
+                                ]
+                            }
+                        },
+                        "Initialize_variable_-_array-newAccount": {
+                            "runAfter": {
+                                "Initialize_variable_-_var-lookBack": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "InitializeVariable",
+                            "inputs": {
+                                "variables": [
+                                    {
+                                        "name": "array-newAccount",
+                                        "type": "array",
+                                        "value": "@null"
+                                    }
+                                ]
+                            }
+                        },
+                        "Initialize_variable_-_array-neverLoggedIn": {
+                            "runAfter": {
+                                "Initialize_variable_-_array-newAccount": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "InitializeVariable",
+                            "inputs": {
+                                "variables": [
+                                    {
+                                        "name": "array-neverLoggedIn",
+                                        "type": "array",
+                                        "value": "@null"
+                                    }
+                                ]
+                            }
+                        },
+                        "Filter_array_-_array-neverLoggedIn": {
+                            "runAfter": {
+                                "Until_-_(var-exitloop_==_TRUE)": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "Query",
+                            "inputs": {
+                                "from": "@variables('array-neverLoggedIn')",
+                                "where": "@equals(1,1)"
+                            }
+                        },
+                        "Filter_array_-_array-newAccount": {
+                            "runAfter": {
+                                "Filter_array_-_array-neverLoggedIn": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "Query",
+                            "inputs": {
+                                "from": "@variables('array-newAccount')",
+                                "where": "@equals(1,1)"
+                            }
+                        },
+                        "Initialize_variable_-_array-disabledGuests": {
+                            "runAfter": {
+                                "Initialize_variable_-_array-neverLoggedIn": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "InitializeVariable",
+                            "inputs": {
+                                "variables": [
+                                    {
+                                        "name": "array-disabledGuests",
+                                        "type": "array",
+                                        "value": "@null"
+                                    }
+                                ]
+                            }
+                        },
+                        "Filter_array_-_array-disabledGuests": {
+                            "runAfter": {
+                                "Filter_array_-_array-newAccount": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "Query",
+                            "inputs": {
+                                "from": "@variables('array-disabledGuests')",
+                                "where": "@equals(1,1)"
+                            }
+                        },
+                        "Initialize_variable_-_var-guestNoEmployeeId": {
+                            "runAfter": {
+                                "Initialize_variable_-_array-guestUserGroups": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "InitializeVariable",
+                            "inputs": {
+                                "variables": [
+                                    {
+                                        "name": "var-guestNoEmployeeId",
+                                        "type": "boolean",
+                                        "value": false
+                                    }
+                                ]
+                            }
+                        },
+                        "Initialize_variable_-_var-guestUser": {
+                            "runAfter": {
+                                "Initialize_variable_-_var-guestNoEmployeeId": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "InitializeVariable",
+                            "inputs": {
+                                "variables": [
+                                    {
+                                        "name": "var-guestUser",
+                                        "type": "boolean",
+                                        "value": false
+                                    }
+                                ]
+                            }
+                        },
+                        "Initialize_variable_-_array-guestUserGroups": {
+                            "runAfter": {
+                                "Initialize_variable_-_array-disabledGuests": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "InitializeVariable",
+                            "inputs": {
+                                "variables": [
+                                    {
+                                        "name": "array-guestUserGroups",
+                                        "type": "array",
+                                        "value": "@null"
+                                    }
+                                ]
+                            }
+                        },
+                        "Initialize_variable_-_var-otherGroups": {
+                            "runAfter": {
+                                "Initialize_variable_-_var-guestUser": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "InitializeVariable",
+                            "inputs": {
+                                "variables": [
+                                    {
+                                        "name": "var-otherGroups",
+                                        "type": "boolean",
+                                        "value": false
+                                    }
+                                ]
+                            }
+                        },
+                        "Initialize_variable_-_array-groupAffiliations": {
+                            "runAfter": {
+                                "Initialize_variable_-_var-otherGroups": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "InitializeVariable",
+                            "inputs": {
+                                "variables": [
+                                    {
+                                        "name": "array-groupAffiliations",
+                                        "type": "array",
+                                        "value": "@null"
+                                    }
+                                ]
+                            }
+                        },
+                        "Initialize_variable_-_array-groupList": {
+                            "runAfter": {
+                                "Initialize_variable_-_array-groupAffiliations": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "InitializeVariable",
+                            "inputs": {
+                                "variables": [
+                                    {
+                                        "name": "array-groupList",
+                                        "type": "array",
+                                        "value": "@null"
+                                    }
+                                ]
+                            }
+                        },
+                        "Initialize_variable_-_array-guestsToDisable": {
+                            "runAfter": {
+                                "Initialize_variable_-_array-dedupeGroups": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "InitializeVariable",
+                            "inputs": {
+                                "variables": [
+                                    {
+                                        "name": "array-guestsToDisable",
+                                        "type": "array",
+                                        "value": "@null"
+                                    }
+                                ]
+                            }
+                        },
+                        "Filter_array_-_array-guestsToDisable": {
+                            "runAfter": {
+                                "Filter_array_-_array-disabledGuests": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "Query",
+                            "inputs": {
+                                "from": "@variables('array-guestsToDisable')",
+                                "where": "@equals(1,1)"
+                            }
+                        },
+                        "Filter_array_-_array-groupList": {
+                            "runAfter": {
+                                "Set_variable_-_array-dedupeGroups": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "Query",
+                            "inputs": {
+                                "from": "@variables('array-dedupeGroups')",
+                                "where": "@equals(1,1)"
+                            }
+                        },
+                        "Filter_array_-_array-groupAffiliations": {
+                            "runAfter": {
+                                "Filter_array_-_array-groupList": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "Query",
+                            "inputs": {
+                                "from": "@variables('array-groupAffiliations')",
+                                "where": "@equals(1,1)"
+                            }
+                        },
+                        "Initialize_variable_-_array-dedupeGroups": {
+                            "runAfter": {
+                                "Initialize_variable_-_array-guestGroups": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "InitializeVariable",
+                            "inputs": {
+                                "variables": [
+                                    {
+                                        "name": "array-dedupeGroups",
+                                        "type": "array",
+                                        "value": "@null"
+                                    }
+                                ]
+                            }
+                        },
+                        "Set_variable_-_array-dedupeGroups": {
+                            "runAfter": {
+                                "Filter_array_-_array-guestsToDisable": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "SetVariable",
+                            "inputs": {
+                                "name": "array-dedupeGroups",
+                                "value": "@union(variables('array-groupList'),variables('array-groupList'))"
+                            }
+                        },
+                        "Initialize_variable_-_array-otherGroups": {
+                            "runAfter": {
+                                "Initialize_variable_-_array-recentLoginGuests": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "InitializeVariable",
+                            "inputs": {
+                                "variables": [
+                                    {
+                                        "name": "array-otherGroups",
+                                        "type": "array",
+                                        "value": "@null"
+                                    }
+                                ]
+                            }
+                        },
+                        "Filter_array_-_array-otherGroups": {
+                            "runAfter": {
+                                "Filter_array_-_array-groupAffiliations": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "Query",
+                            "inputs": {
+                                "from": "@variables('array-otherGroups')",
+                                "where": "@equals(1,1)"
+                            }
+                        },
+                        "Initialize_variable_-_array-guestGroups": {
+                            "runAfter": {
+                                "Initialize_variable_-_array-groupList": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "InitializeVariable",
+                            "inputs": {
+                                "variables": [
+                                    {
+                                        "name": "array-guestGroups",
+                                        "type": "array",
+                                        "value": "@null"
+                                    }
+                                ]
+                            }
+                        },
+                        "Initialize_variable_-_array-recentLoginGuests": {
+                            "runAfter": {
+                                "Initialize_variable_-_array-guestsToDisable": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "InitializeVariable",
+                            "inputs": {
+                                "variables": [
+                                    {
+                                        "name": "array-recentLoginGuests",
+                                        "type": "array",
+                                        "value": "@null"
+                                    }
+                                ]
+                            }
+                        },
+                        "Filter_array_-_array-recentLoginGuests": {
+                            "runAfter": {
+                                "Filter_array_-_array-otherGroups": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "Query",
+                            "inputs": {
+                                "from": "@variables('array-recentLoginGuests')",
+                                "where": "@equals(1,1)"
+                            }
+                        },
+                        "Initialize_variable_-_var-lastSignIn": {
+                            "runAfter": {
+                                "Initialize_variable_-_array-otherGroups": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "InitializeVariable",
+                            "inputs": {
+                                "variables": [
+                                    {
+                                        "name": "var-lastSignIn",
+                                        "type": "string"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "outputs": {}
+                },
+                "parameters": {
+                    "$connections": {
+                        "value": {}
+                    }
+                }
+            }
+        }
+    ]
+}

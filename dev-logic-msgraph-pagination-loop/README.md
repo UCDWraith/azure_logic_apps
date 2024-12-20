@@ -16,4 +16,6 @@ Click the button below to deploy the Logic App to Azure.
 
 [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FUCDWraith%2Fazure_logic_apps%2Fmain%2Fdev-logic-msgraph-pagination-loop%2Ftemplate.json)
 
+The Logic App is deployed in a **DISABLED** state. When you have assigned the relevant API permissions 'Enable' the Logic App in the portal (or update the template during the deployment such that it is Enabled).
+
 # Logic App Structure
