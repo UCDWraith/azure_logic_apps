@@ -84,4 +84,8 @@ Click the button below to deploy the Logic App to Azure.
 
 The Logic App is deployed in a **DISABLED** state. When you have assigned the relevant API permissions 'Enable' the Logic App in the portal.
 
-I have generalised the Object ID's of the generalised groups in the template - "11111111-1111-1111-1111-111111111111" & "22222222-2222-2222-2222-222222222222", these should be updated accordingly or the surrounding logic removed if it is not required.
+I have generalised the Object ID's of the generalised groups in the template:
+- "11111111-1111-1111-1111-111111111111"
+- "22222222-2222-2222-2222-222222222222"
+
+These should be updated accordingly or the surrounding logic removed if it is not required.
